@@ -29,70 +29,94 @@
     font-size: 15px;
     line-height: 1.6;
     min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(0,230,118,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse at 50% 100%, rgba(64,196,255,0.03) 0%, transparent 70%);
   }
   .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
-  a { color: var(--accent); text-decoration: none; }
+  a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
   a:hover { text-decoration: underline; }
 
   /* Hero */
   .hero {
-    padding: 80px 0 60px;
+    padding: 100px 0 72px;
     text-align: center;
     border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent);
   }
   .hero .brand {
-    font-size: 13px;
-    letter-spacing: 4px;
+    font-size: 12px;
+    letter-spacing: 6px;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    display: inline-block;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 4px;
   }
   .hero h1 {
-    font-size: 36px;
+    font-size: 40px;
     font-weight: 700;
     color: #fff;
-    line-height: 1.2;
-    margin-bottom: 16px;
+    line-height: 1.15;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
   }
   .hero .subtitle {
     font-size: 15px;
     color: var(--muted);
-    max-width: 500px;
-    margin: 0 auto 32px;
+    max-width: 520px;
+    margin: 0 auto 36px;
   }
   .btn {
     display: inline-block;
     background: var(--accent);
     color: #000;
     font-weight: 700;
-    padding: 14px 32px;
+    padding: 14px 36px;
     border-radius: var(--radius);
     font-size: 14px;
     letter-spacing: 0.5px;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, transform 0.15s;
   }
-  .btn:hover { box-shadow: 0 0 24px var(--accent-glow); text-decoration: none; }
+  .btn:hover { box-shadow: 0 0 28px var(--accent-glow); text-decoration: none; transform: translateY(-1px); }
 
   /* Stats */
   .stats {
     display: flex;
     justify-content: center;
-    gap: 48px;
-    padding: 48px 0;
+    gap: 56px;
+    padding: 56px 0;
     border-bottom: 1px solid var(--border);
   }
   .stat { text-align: center; }
-  .stat .num { font-size: 28px; font-weight: 700; color: #fff; }
-  .stat .label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .num { font-size: 32px; font-weight: 700; color: #fff; }
+  .stat .label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
 
   /* Sections */
-  section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
   section h2 {
-    font-size: 13px;
-    letter-spacing: 2px;
+    font-size: 12px;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 28px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section h2::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
   }
 
   /* Alert block */
@@ -100,15 +124,26 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 28px;
     font-size: 13px;
-    line-height: 1.8;
+    line-height: 1.9;
     color: var(--text);
     white-space: pre-wrap;
+    position: relative;
+    overflow: hidden;
   }
-  .alert-block .tag-gap     { color: var(--red); }
-  .alert-block .tag-move    { color: var(--blue); }
-  .alert-block .tag-volume  { color: var(--orange); }
+  .alert-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, var(--accent), transparent);
+    border-radius: 4px 0 0 4px;
+  }
+  .alert-block .tag-header  { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+  .alert-block .tag-gap     { color: var(--red); font-weight: 700; }
+  .alert-block .tag-move    { color: var(--blue); font-weight: 700; }
+  .alert-block .tag-volume  { color: var(--orange); font-weight: 700; }
   .alert-block .tag-meta    { color: var(--muted); }
 
   /* Signal grid */
@@ -121,80 +156,77 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 22px 24px;
     display: flex;
-    gap: 14px;
+    gap: 16px;
     align-items: flex-start;
+    transition: border-color 0.2s, background 0.2s;
   }
+  .signal-card:hover { border-color: #2a2a3e; background: #14141e; }
   .signal-card .icon {
-    font-size: 20px;
-    width: 36px; height: 36px;
-    border-radius: 6px;
+    font-size: 18px;
+    width: 40px; height: 40px;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    font-weight: 700;
   }
-  .signal-card .icon.gap     { background: #ff52521a; color: var(--red); }
-  .signal-card .icon.move    { background: #40c4ff1a; color: var(--blue); }
-  .signal-card .icon.volume  { background: #ffab401a; color: var(--orange); }
-  .signal-card .icon.over    { background: #b388ff1a; color: var(--purple); }
-  .signal-card .icon.spread  { background: #ff52521a; color: var(--red); }
+  .signal-card .icon.gap     { background: #ff525218; color: var(--red); }
+  .signal-card .icon.move    { background: #40c4ff18; color: var(--blue); }
+  .signal-card .icon.volume  { background: #ffab4018; color: var(--orange); }
+  .signal-card .icon.over    { background: #b388ff18; color: var(--purple); }
+  .signal-card .icon.spread  { background: #ff525218; color: var(--red); }
   .signal-card .label {
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     color: #fff;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
   }
-  .signal-card .desc { font-size: 13px; color: var(--muted); }
+  .signal-card .desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
 
   /* Email */
   .email-section { text-align: center; }
-  .email-section .desc { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
-  .email-form { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-  .email-form input[type="email"] {
-    background: var(--bg);
+  .email-section .desc { color: var(--muted); margin-bottom: 24px; font-size: 14px; line-height: 1.7; }
+  .beehiiv-embed-wrapper {
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 14px;
-    padding: 12px 16px;
-    width: 300px;
-    max-width: 100%;
-    outline: none;
-    transition: border-color 0.2s;
+    padding: 8px;
+    max-width: 440px;
+    margin: 0 auto;
   }
-  .email-form input[type="email"]:focus { border-color: var(--accent); }
-  .email-form button {
-    background: var(--accent);
-    color: #000;
+  .beehiiv-embed-wrapper iframe {
+    display: block;
+    width: 100%;
     border: none;
-    border-radius: var(--radius);
-    font-family: var(--font);
-    font-weight: 700;
-    font-size: 14px;
-    padding: 12px 24px;
-    cursor: pointer;
-    transition: box-shadow 0.2s;
+    border-radius: 4px;
   }
-  .email-form button:hover { box-shadow: 0 0 20px var(--accent-glow); }
-  .email-note { font-size: 11px; color: var(--muted); margin-top: 12px; }
+  .email-note { font-size: 11px; color: var(--muted); margin-top: 16px; }
 
   /* Footer */
   footer {
-    padding: 40px 0 48px;
+    padding: 56px 0 56px;
     text-align: center;
     font-size: 12px;
     color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 0;
   }
-  footer .links { margin-bottom: 12px; display: flex; gap: 20px; justify-content: center; }
+  footer .links {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
   footer .links a { color: var(--muted); font-size: 12px; }
   footer .links a:hover { color: var(--accent); text-decoration: none; }
 
   @media (max-width: 500px) {
-    .hero { padding: 48px 0 40px; }
-    .hero h1 { font-size: 26px; }
-    .stats { gap: 24px; flex-wrap: wrap; }
-    .stat .num { font-size: 22px; }
+    .hero { padding: 64px 0 48px; }
+    .hero h1 { font-size: 28px; }
+    .hero .brand { letter-spacing: 4px; padding: 4px 10px; font-size: 11px; }
+    .stats { gap: 28px; flex-wrap: wrap; }
+    .stat .num { font-size: 26px; }
   }
 </style>
 </head>
@@ -229,7 +261,7 @@
 
 <section class="container">
   <h2>Sample Alert</h2>
-  <div class="alert-block"><span class="tag-meta">[Signal Desk] Sun Apr 27 10:15 UTC</span>
+  <div class="alert-block"><span class="tag-header">[Signal Desk] Sun Apr 27 10:15 UTC</span>
 
 <span class="tag-gap">[GAP]</span> <span class="tag-meta">[HIGH]</span> Celtics NO @ 0.882 <span class="tag-meta">|</span> Divergence -4.3pp widened <span class="tag-meta">(PM 11.8% vs sportsbooks 16.1%)</span>
 
@@ -285,12 +317,11 @@
     Free signal feed. No spam. Unsubscribe anytime.
     Pro tier with faster alerts and custom watchlists coming soon.
   </p>
-  <!-- Paste your ConvertKit form HTML below this line, replacing this placeholder -->
-  <form class="email-form" action="https://app.convertkit.com/forms/REPLACE_ME" method="post">
-    <input type="email" name="email_address" placeholder="your@email.com" required>
-    <button type="submit">Subscribe</button>
-  </form>
-  <!-- End ConvertKit form -->
+  <!-- Beehiiv embed — create a publication at beehiiv.com, go to Settings → Embed, replace src below -->
+  <div class="beehiiv-embed-wrapper">
+    <iframe src="https://embeds.beehiiv.com/YOUR_PUBLICATION_ID" data-test-id="beehiiv-embed" height="320" scrolling="no"></iframe>
+  </div>
+  <!-- End Beehiiv embed -->
   <p class="email-note">Or skip the inbox: <a href="https://t.me/SignalDesk">t.me/SignalDesk</a></p>
 </section>
 
