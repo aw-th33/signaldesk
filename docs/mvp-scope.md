@@ -46,7 +46,7 @@ Free tier only at MVP stage. No paid channel. No subscriber gating.
 ### 4. Landing page
 
 One page. Carrd is fine. Contains:
-- Name: "Apex Signal"
+- Name: "Signal Desk"
 - Subtitle: "NBA championship probability intelligence"
 - 3 bullet points of what you get
 - Email signup (ConvertKit or Substack embed)

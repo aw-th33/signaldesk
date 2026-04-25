@@ -18,7 +18,7 @@ Build a specialist F1 probability intelligence product.
 
 Working concept:
 
-> Apex Signal: F1 probability intelligence for serious fans, bettors, fantasy players, and market watchers.
+> Signal Desk: F1 probability intelligence for serious fans, bettors, fantasy players, and market watchers.
 
 This should not start as a full SaaS dashboard or betting app. It should start as a **productized intelligence service** powered by agents.
 

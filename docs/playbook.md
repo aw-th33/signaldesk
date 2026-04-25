@@ -15,14 +15,14 @@ What needs to happen:
 **Create the landing page**
 
 One page. Carrd, Notion site, or a simple HTML file hosted on Vercel. Contents:
-- What Apex Signal does (three bullet points)
+- What Signal Desk does (three bullet points)
 - Sample alert (a screenshot or a formatted block showing what a subscriber sees)
 - Newsletter signup (ConvertKit free tier or Substack)
 - "Coming soon: Pro alerts" teaser
 
 **Create social accounts**
 
-- X/Twitter: @ApexSignalNBA (or similar)
+- X/Twitter: @SignalDeskNBA (or similar)
 - Reddit account
 - Telegram channel (free tier, public)
 - Discord server (optional, for community)
@@ -108,7 +108,7 @@ Payment: Stripe payment link. No subscription management system yet. Manual onbo
 Private channel. Bot-powered. Format:
 
 ```
-[Apex Signal Pro] Mon Apr 28 10:15 UTC
+[Signal Desk Pro] Mon Apr 28 10:15 UTC
 
 NBA CHAMPIONSHIP | Celtics NO @ 0.882
 Divergence: -4.3pp (PM vs books)

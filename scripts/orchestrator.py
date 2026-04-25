@@ -31,7 +31,7 @@ def run_step(name, script):
 
 
 def main():
-    print("Apex Signal Orchestrator")
+    print("Signal Desk Orchestrator")
     print()
 
     steps = [

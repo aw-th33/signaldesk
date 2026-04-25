@@ -262,7 +262,7 @@ def detect_volume_spike(matched, vol_history, signals):
 def main():
     t0 = time.time()
     now = datetime.now(timezone.utc).isoformat()
-    print(f"Apex Signal Engine — {now}")
+    print(f"Signal Desk Engine — {now}")
     print("-" * 55)
 
     print("Fetching Polymarket data...")

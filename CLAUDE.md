@@ -1,4 +1,4 @@
-# Apex Signal — Project Context
+# Signal Desk — Project Context
 
 ## What We're Building
 A paid sports intelligence feed that monitors Polymarket sports prediction markets. It surfaces probability movements, sportsbook market divergences, and signal quality scores — delivered via Telegram.
@@ -42,26 +42,45 @@ $5K–$7K MRR side business. This is NOT venture-scale software. Minimal ops ove
 - No direct competitor exists at Polymarket × sports intelligence intersection
 
 ## What's Built
-- `scripts/compare_nba.py` — NBA divergence + signal quality script (working, loads .env from root)
+
+### Core Pipeline (MVP Complete)
+- `scripts/signal_engine.py` — Combines PM + Odds API, detects 5 signal types (divergence, prob move, overround drift, spread deterioration, volume spike), diffs against `state.json`, outputs `latest_signals.json`
+- `scripts/alert_formatter.py` — Reads signals, produces 3 format variants: Telegram (tagged one-liners), Twitter (compact top-2 under 280 chars), Newsletter (grouped with context)
+- `scripts/telegram_bot.py` — Posts formatted alerts to Telegram channel via Bot API; skips when zero signals
+- `scripts/twitter_bot.py` — Posts top-2 signals to X via tweepy; skips when zero signals
+- `scripts/orchestrator.py` — Chains engine → formatter → Telegram → Twitter (~8s full pipeline)
+- `requirements.txt` — requests, tweepy
+
+### Infrastructure
+- `.github/workflows/scheduler.yml` — GitHub Actions, runs every 4 hours (0 */4 * * *), state persists between runs via Actions cache (restore/save pattern)
+- `state.json` — Persistent market state for diff detection, volume history for 7-day averages
+- `latest_signals.json` — Machine-readable signal output consumed by formatters
+
+### Delivery Channels (Live)
+- **Telegram:** `@SignalDesk` channel, bot `@SignalDesk_Bot` posts when signals trigger
+- **Twitter/X:** Automated posting via API v2 (credits purchased)
+- **GitHub:** Repo at `github.com/aw-th33/signaldesk`, Actions scheduler active, secrets configured (ODDS_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL, TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET)
+
+### Exploration Scripts
+- `scripts/compare_nba.py` — NBA divergence + signal quality script
 - `scripts/insights.py` — Cross-market overround, volume anomaly, synthetic odds
 - `scripts/explore_polymarket.py` — Full tag/market/liquidity exploration
 - `scripts/f1_deep_dive.py` — F1-specific market crawler
+- `scripts/compare_pm_bf.py` — Betfair comparison (needs .env loading)
+
+### Docs
 - `docs/mvp-scope.md` — 4-component MVP build plan, signal thresholds, success metrics
 - `docs/playbook.md` — 30-day execution plan (Phase 0–3)
 - `docs/strategy.md` — Positioning, wedge choice, business model
 - `docs/insights-and-opportunity.md` — Data findings, competitive gap, revenue math
 - `docs/original-pitch.md` — Initial vision document
-- `.env` — Contains The Odds API key
-- `opencode.json` — Superpowers plugin config
 
-## What's NOT Built Yet (Next Steps)
-1. **Signal engine** — combine compare_nba.py + insights.py + state tracking + diff detection
-2. **Alert formatter** — JSON → Telegram/Twitter/newsletter text templates
-3. **Telegram bot and channel** — BotFather setup, webhook or polling
-4. **Landing page** — Carrd or static HTML on Vercel
-5. **GitHub Actions scheduler** — `.github/workflows/scheduler.yml` (if Path A chosen)
-6. **Free content test** — 2-week daily X posts + weekly newsletter to r/sportsbook
-7. **compare_pm_bf.py** — needs .env loading added if Betfair path is revisited
+## What's NOT Built Yet (Phase 2)
+1. **Landing page** — Carrd or static HTML on Vercel
+2. **Paid tier** — Stripe payment link, private Telegram channel
+3. **Historical dashboard** — 7-day/30-day probability trends
+4. **Additional sports** — Soccer (UCL), NHL, F1 expansion
+5. **Free content test** — Reddit posts to r/sportsbook, newsletter
 
 ## API Details
 - The Odds API key: in `.env` as `ODDS_API_KEY`

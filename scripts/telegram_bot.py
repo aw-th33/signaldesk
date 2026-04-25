@@ -18,7 +18,7 @@ if os.path.exists(env_path):
                 os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")  # e.g. @ApexSignalNBA
+CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")  # e.g. @SignalDeskNBA
 DRY_RUN = os.environ.get("TELEGRAM_DRY_RUN", "0") == "1"
 
 

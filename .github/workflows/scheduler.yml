@@ -1,4 +1,4 @@
-name: Apex Signal Engine
+name: Signal Desk Engine
 
 on:
   schedule:

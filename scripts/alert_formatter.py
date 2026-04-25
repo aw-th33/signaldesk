@@ -20,9 +20,9 @@ SEVERITY_LABEL = {"high": "HIGH", "medium": "MED", "low": "LOW"}
 
 def fmt_telegram(signals, meta):
     if not signals:
-        return "[Apex Signal] " + meta["date"] + "\nNo triggered signals this cycle. Markets stable."
+        return "[Signal Desk] " + meta["date"] + "\nNo triggered signals this cycle. Markets stable."
 
-    lines = ["[Apex Signal] " + meta["date"]]
+    lines = ["[Signal Desk] " + meta["date"]]
     lines.append("")
 
     for s in signals:
@@ -36,20 +36,48 @@ def fmt_telegram(signals, meta):
 
 def fmt_twitter(signals, meta):
     top = sorted(signals, key=lambda s:
-        {"high": 3, "medium": 2, "low": 1}.get(s["severity"], 0), reverse=True)[:3]
+        {"high": 3, "medium": 2, "low": 1}.get(s["severity"], 0), reverse=True)[:2]
 
-    lines = ["NBA Championship Market Intel -- " + meta["date"]]
+    lines = ["NBA Market Intel -- " + meta["date"]]
     lines.append("")
 
     if not top:
         lines.append("Markets stable. No triggered signals.")
     else:
         for s in top:
-            tag = TYPE_PREFIX.get(s["type"], "[SIG]")
-            lines.append(tag + " " + s["message"])
+            d = s.get("details", {})
+            t = s["type"]
+            team = s.get("team", "")
+            line = ""
+
+            if t == "divergence_change":
+                chg = abs(round(d.get("change", 0) * 100, 1))
+                line = "{} PM/Books gap {} {:.1f}pp (PM {:.0%} vs {:.0%})".format(
+                    team, d.get("direction", "changed"), chg,
+                    d.get("pm_prob", 0), d.get("book_prob", 0))
+            elif t == "probability_move":
+                chg = d.get("change", 0) * 100
+                line = "{} prob {} {:.1%}->{:.1%} ({:+.1f}pp) ${:.0f}K vol".format(
+                    team, d.get("direction", "moved"),
+                    d.get("previous_prob", 0), d.get("pm_prob", 0),
+                    chg, d.get("vol", 0) / 1000)
+            elif t == "volume_spike":
+                ratio = d.get("ratio", 1)
+                line = "{} vol spike {:.0f}x avg (24h ${:.0f}K) prob {:.0%}".format(
+                    team, ratio, d.get("vol_24hr", 0) / 1000, d.get("pm_prob", 0))
+            elif t == "overround_drift":
+                line = "Overround {} {:.1f}pp drift".format(
+                    d.get("direction", "shifted"), abs(round(d.get("drift", 0), 3)))
+            elif t == "spread_deterioration":
+                line = "{} spread widened {:.3f}->{:.3f}".format(
+                    team, d.get("previous_spread", 0), d.get("current_spread", 0))
+            else:
+                line = s.get("message", "")
+
+            lines.append(line)
             lines.append("")
 
-    lines.append("Full data + methodology in bio. Follow for more.")
+    lines.append("Full data in bio. Follow for more.")
     return "\n".join(lines).strip()
 
 

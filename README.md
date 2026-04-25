@@ -1,4 +1,4 @@
-# Apex Signal
+# Signal Desk
 
 F1 / NBA / Soccer prediction market intelligence. Tracks Polymarket futures markets and surfaces probability movements, sportsbook divergences, and signal quality scores.
 
