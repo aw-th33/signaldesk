@@ -1,0 +1,7 @@
+.env
+*.pyc
+__pycache__/
+output/
+*.txt
+state.json
+latest_signals.json
