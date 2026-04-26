@@ -251,7 +251,7 @@ def post_telegram(text):
         return
     escaped = text.replace("&", "&amp;").replace("<", "&lt;")
     if DRY_RUN:
-        print(f"[DRY RUN] Telegram ({len(escaped)} chars):\n{text}\n")
+        print(f"[DRY RUN] Telegram ({len(escaped)} chars):\n{escaped}\n")
         return
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
