@@ -1,20 +1,9 @@
-import json, os, sys, io
-from datetime import datetime, timezone
+import json, os, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SIGNALS_FILE = os.path.join(BASE_DIR, "latest_signals.json")
 STATE_FILE = os.path.join(BASE_DIR, "state.json")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-
-# Load .env
-env_path = os.path.join(BASE_DIR, ".env")
-if os.path.exists(env_path):
-    with open(env_path) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
 
 
 
