@@ -1,9 +1,5 @@
-import json, os, sys, io, re, time, requests
+import json, os, sys, io
 from datetime import datetime, timezone
-
-# Only reassign stdout if not in test mode (pytest detection)
-if "pytest" not in sys.modules:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SIGNALS_FILE = os.path.join(BASE_DIR, "latest_signals.json")
@@ -20,13 +16,6 @@ if os.path.exists(env_path):
                 k, v = line.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
 
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")
-TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
-TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
-TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
-TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
-DRY_RUN = os.environ.get("SNAPSHOT_DRY_RUN", "0") == "1"
 
 
 def load_snapshot_data(path=None):

@@ -13,7 +13,7 @@ def test_load_snapshot_data_returns_expected_keys(tmp_path):
         }
     }
     f = tmp_path / "latest_signals.json"
-    f.write_text(json.dumps(signals))
+    f.write_text(json.dumps(signals), encoding="utf-8")
     data = load_snapshot_data(str(f))
     assert data["teams"]["Celtics"]["pm_prob"] == 0.184
     assert data["market"]["total_vol_24hr"] == 2100000
@@ -31,7 +31,7 @@ def test_load_prev_state_returns_pm_probs(tmp_path):
         }
     }
     f = tmp_path / "state.json"
-    f.write_text(json.dumps(state))
+    f.write_text(json.dumps(state), encoding="utf-8")
     prev = load_prev_state(str(f))
     assert prev["Celtics"] == 0.172
     assert prev["Thunder"] == 0.169
