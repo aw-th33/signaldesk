@@ -1,0 +1,56 @@
+import json, os, sys, io, re, time, requests
+from datetime import datetime, timezone
+
+# Only reassign stdout if not in test mode (pytest detection)
+if "pytest" not in sys.modules:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SIGNALS_FILE = os.path.join(BASE_DIR, "latest_signals.json")
+STATE_FILE = os.path.join(BASE_DIR, "state.json")
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+# Load .env
+env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
+
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")
+TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
+TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
+TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
+TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
+DRY_RUN = os.environ.get("SNAPSHOT_DRY_RUN", "0") == "1"
+
+
+def load_snapshot_data(path=None):
+    path = path or SIGNALS_FILE
+    if not os.path.exists(path):
+        print("latest_signals.json not found. Run signal_engine.py first.")
+        sys.exit(1)
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    return {
+        "generated_at": raw.get("generated_at", ""),
+        "market": raw.get("market", {}),
+        "teams": raw.get("snapshot", {}),
+    }
+
+
+def load_prev_state(path=None):
+    path = path or STATE_FILE
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        state = json.load(f)
+    return {
+        team: data["pm_prob"]
+        for team, data in state.get("markets", {}).items()
+        if "pm_prob" in data
+    }
