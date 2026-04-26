@@ -39,3 +39,61 @@ def test_load_prev_state_returns_pm_probs(tmp_path):
 def test_load_prev_state_missing_file_returns_empty(tmp_path):
     prev = load_prev_state(str(tmp_path / "nonexistent.json"))
     assert prev == {}
+
+from unittest.mock import patch, MagicMock
+from daily_snapshot import fetch_espn_scores, fetch_espn_injuries
+
+def test_fetch_espn_scores_returns_list_of_games():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "events": [
+            {
+                "competitions": [{
+                    "competitors": [
+                        {"homeAway": "home", "team": {"shortDisplayName": "Celtics"}, "score": "112"},
+                        {"homeAway": "away", "team": {"shortDisplayName": "Heat"}, "score": "94"},
+                    ],
+                    "status": {"type": {"completed": True}}
+                }]
+            }
+        ]
+    }
+    with patch("daily_snapshot.requests.get", return_value=mock_resp):
+        games = fetch_espn_scores()
+    assert len(games) == 1
+    assert games[0]["winner"] == "Celtics"
+    assert games[0]["winner_score"] == 112
+    assert games[0]["loser"] == "Heat"
+    assert games[0]["loser_score"] == 94
+
+def test_fetch_espn_scores_returns_empty_on_failure():
+    with patch("daily_snapshot.requests.get", side_effect=Exception("timeout")):
+        games = fetch_espn_scores()
+    assert games == []
+
+def test_fetch_espn_injuries_returns_list():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "injuries": [
+            {
+                "team": {"shortDisplayName": "Sixers"},
+                "injuries": [
+                    {"athlete": {"displayName": "Joel Embiid"}, "status": "Questionable", "details": {"location": "knee"}}
+                ]
+            }
+        ]
+    }
+    with patch("daily_snapshot.requests.get", return_value=mock_resp):
+        injuries = fetch_espn_injuries()
+    assert len(injuries) == 1
+    assert injuries[0]["player"] == "Joel Embiid"
+    assert injuries[0]["team"] == "Sixers"
+    assert injuries[0]["status"] == "Questionable"
+    assert injuries[0]["location"] == "knee"
+
+def test_fetch_espn_injuries_returns_empty_on_failure():
+    with patch("daily_snapshot.requests.get", side_effect=Exception("timeout")):
+        injuries = fetch_espn_injuries()
+    assert injuries == []
