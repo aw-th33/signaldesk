@@ -109,3 +109,48 @@ def test_fetch_espn_injuries_returns_empty_on_non_200():
     with patch("daily_snapshot.requests.get", return_value=mock_resp):
         injuries = fetch_espn_injuries()
     assert injuries == []
+
+
+from daily_snapshot import fmt_telegram_snapshot
+
+SAMPLE_TEAMS = {
+    "Celtics": {"pm_prob": 0.184, "book_prob": 0.161, "gap": 0.023, "vol": 340000, "spread": 0.005},
+    "Thunder": {"pm_prob": 0.161, "book_prob": 0.174, "gap": -0.013, "vol": 210000, "spread": 0.006},
+    "Knicks":  {"pm_prob": 0.147, "book_prob": 0.149, "gap": -0.002, "vol": 180000, "spread": 0.007},
+}
+SAMPLE_PREV = {"Celtics": 0.172, "Thunder": 0.169, "Knicks": 0.147}
+SAMPLE_MARKET = {"total_vol_24hr": 2100000, "overround": 1.014, "matched_teams": 14}
+SAMPLE_DATE = "Apr 26"
+
+def test_fmt_telegram_snapshot_contains_header():
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "NBA Market Brief" in out
+    assert "Apr 26" in out
+
+def test_fmt_telegram_snapshot_shows_top_5_teams():
+    teams = {f"Team{i}": {"pm_prob": 0.1 - i*0.01, "book_prob": 0.1, "gap": 0.0, "vol": 100000, "spread": 0.005} for i in range(7)}
+    prev = {}
+    out = fmt_telegram_snapshot(teams, prev, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Team0" in out
+    assert "Team4" in out
+    assert "Team5" not in out
+
+def test_fmt_telegram_snapshot_shows_overnight_change():
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "+1.2pp" in out  # Celtics moved from 17.2% to 18.4%
+
+def test_fmt_telegram_snapshot_omits_news_when_empty():
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "NBA Context" not in out
+
+def test_fmt_telegram_snapshot_includes_scores():
+    games = [{"winner": "Celtics", "winner_score": 112, "loser": "Heat", "loser_score": 94}]
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, games, [])
+    assert "Celtics" in out
+    assert "112" in out
+
+def test_fmt_telegram_snapshot_includes_injuries():
+    injuries = [{"player": "Joel Embiid", "team": "Sixers", "status": "Questionable", "location": "knee"}]
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
+    assert "Embiid" in out
+    assert "Questionable" in out

@@ -95,3 +95,45 @@ def fetch_espn_injuries():
     except Exception as e:
         print(f"ESPN injuries fetch failed: {e}")
         return []
+
+
+def _overnight_arrow(change_pp):
+    if change_pp >= 0.3:
+        return f"📈 +{change_pp:.1f}pp"
+    if change_pp <= -0.3:
+        return f"📉 {change_pp:.1f}pp"
+    return "—"
+
+
+def fmt_telegram_snapshot(teams, prev_probs, market, date_str, games, injuries):
+    lines = [f"📊 NBA Market Brief — {date_str}", ""]
+    lines.append("🏆 Championship Odds (Polymarket)")
+
+    sorted_teams = sorted(teams.items(), key=lambda x: x[1]["pm_prob"], reverse=True)
+    for i, (team, d) in enumerate(sorted_teams[:5], 1):
+        pm = d["pm_prob"] * 100
+        book = d["book_prob"] * 100
+        gap = d["gap"] * 100
+        prev = prev_probs.get(team)
+        change_pp = (d["pm_prob"] - prev) * 100 if prev is not None else None
+        arrow = _overnight_arrow(change_pp) if change_pp is not None else "—"
+        gap_str = f"{gap:+.1f}pp"
+        lines.append(f"{i}. {team:<12} {pm:.1f}%  {arrow:<14} | Books: {book:.1f}%  GAP: {gap_str}")
+
+    if games or injuries:
+        lines.append("")
+        lines.append("📰 NBA Context")
+        for g in games:
+            lines.append(f"• {g['winner']} def. {g['loser']} {g['winner_score']}-{g['loser_score']}")
+        for inj in injuries:
+            loc = f" ({inj['location']})" if inj["location"] else ""
+            lines.append(f"• {inj['player']}{loc} listed {inj['status']} — {inj['team']}")
+
+    lines.append("")
+    lines.append("📊 Market Health")
+    vol_m = market.get("total_vol_24hr", 0) / 1_000_000
+    overround_pp = (market.get("overround", 1.0) - 1.0) * 100
+    tracked = market.get("matched_teams", "?")
+    lines.append(f"24h vol: ${vol_m:.1f}M | Overround: {overround_pp:.1f}pp | Markets tracked: {tracked}")
+
+    return "\n".join(lines)
