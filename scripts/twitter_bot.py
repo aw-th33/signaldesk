@@ -29,13 +29,6 @@ def main():
         print("  Required: TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET")
         return
 
-    if os.path.exists(SIGNALS_FILE):
-        with open(SIGNALS_FILE, encoding="utf-8") as f:
-            n = len(json.load(f).get("signals", []))
-        if n == 0:
-            print("No signals, skipping Twitter post.")
-            return
-
     if not os.path.exists(TWITTER_FILE):
         print("No twitter.txt found. Run alert_formatter.py first.")
         return
