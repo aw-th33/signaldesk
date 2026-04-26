@@ -2,7 +2,7 @@ import json, os, pytest, sys
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot, fmt_twitter_snapshot, fmt_newsletter_snapshot
+from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, _filter_injuries, fmt_telegram_snapshot, fmt_twitter_snapshot, fmt_newsletter_snapshot
 
 def test_load_snapshot_data_returns_expected_keys(tmp_path):
     signals = {
@@ -76,7 +76,7 @@ def test_fetch_espn_injuries_returns_list():
     mock_resp.json.return_value = {
         "injuries": [
             {
-                "team": {"shortDisplayName": "Sixers"},
+                "displayName": "Sixers",
                 "injuries": [
                     {"athlete": {"displayName": "Joel Embiid"}, "status": "Questionable", "details": {"location": "knee"}}
                 ]
@@ -109,6 +109,38 @@ def test_fetch_espn_injuries_returns_empty_on_non_200():
     with patch("daily_snapshot.requests.get", return_value=mock_resp):
         injuries = fetch_espn_injuries()
     assert injuries == []
+
+
+def test_filter_injuries_keeps_tracked_teams():
+    injuries = [
+        {"player": "Joel Embiid", "team": "Philadelphia 76ers", "status": "Out", "location": "knee"},
+        {"player": "Victor Wembanyama", "team": "San Antonio Spurs", "status": "Out", "location": "ankle"},
+    ]
+    pm_teams = {"Boston Celtics", "Philadelphia 76ers"}
+    filtered = _filter_injuries(injuries, pm_teams)
+    assert len(filtered) == 1
+    assert filtered[0]["player"] == "Joel Embiid"
+
+
+def test_filter_injaries_removes_untracked_teams():
+    injuries = [
+        {"player": "Bradley Beal", "team": "Phoenix Suns", "status": "Out", "location": "knee"},
+    ]
+    filtered = _filter_injuries(injuries, {"Los Angeles Lakers"})
+    assert filtered == []
+
+
+def test_filter_injuries_empty_input():
+    assert _filter_injuries([], {"Boston Celtics"}) == []
+    assert _filter_injuries([], {}) == []
+
+
+def test_filter_injuries_case_insensitive():
+    injuries = [
+        {"player": "Luka Doncic", "team": "los angeles lakers", "status": "Out", "location": "calf"},
+    ]
+    filtered = _filter_injuries(injuries, {"Los Angeles Lakers"})
+    assert len(filtered) == 1
 
 
 SAMPLE_TEAMS = {

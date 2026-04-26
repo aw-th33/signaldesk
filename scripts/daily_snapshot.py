@@ -97,7 +97,7 @@ def fetch_espn_injuries():
             return []
         injuries = []
         for team_block in resp.json().get("injuries", []):
-            team_name = team_block.get("team", {}).get("shortDisplayName", "")
+            team_name = team_block.get("displayName", "")
             for inj in team_block.get("injuries", []):
                 status = inj.get("status", "")
                 # Only surface high-impact statuses; "Day-To-Day" and "Probable" intentionally excluded
@@ -114,6 +114,20 @@ def fetch_espn_injuries():
     except Exception as e:
         print(f"ESPN injuries fetch failed: {e}")
         return []
+
+
+def _normalize(name):
+    return name.lower().strip()
+
+
+def _filter_injuries(injuries, pm_team_keys):
+    pm_lookup = {_normalize(k): k for k in pm_team_keys}
+    filtered = []
+    for inj in injuries:
+        team = inj.get("team", "")
+        if _normalize(team) in pm_lookup:
+            filtered.append(inj)
+    return filtered
 
 
 def _overnight_arrow(change_pp):
@@ -309,9 +323,9 @@ def main():
 
     print("Fetching ESPN data...")
     games = fetch_espn_scores()
-    injuries = fetch_espn_injuries()
-    print(f"  Games: {len(games)} | Injuries: {len(injuries)}")
-
+    injuries_raw = fetch_espn_injuries()
+    injuries = _filter_injuries(injuries_raw, data.get("teams", {}).keys())
+    print(f"  Games: {len(games)} | Injuries: {len(injuries_raw)} → {len(injuries)} filtered")
     teams = data["teams"]
     market = data["market"]
 
