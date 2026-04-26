@@ -284,3 +284,32 @@ def test_fmt_newsletter_snapshot_injury_no_location():
 def test_fmt_newsletter_snapshot_empty_teams_no_crash():
     out = fmt_newsletter_snapshot({}, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
     assert "Market Health" in out
+
+
+def test_main_dry_run_writes_output_files(tmp_path):
+    signals = {
+        "generated_at": "2026-04-26T09:00:00+00:00",
+        "market": {"total_vol_24hr": 2100000, "overround": 1.014, "matched_teams": 14},
+        "snapshot": {
+            "Celtics": {"pm_prob": 0.184, "book_prob": 0.161, "gap": 0.023, "vol": 340000, "spread": 0.005},
+        }
+    }
+    state = {"markets": {"Celtics": {"pm_prob": 0.172, "book_prob": 0.161, "gap": 0.011, "vol": 300000, "spread": 0.005}}}
+    sig_file = tmp_path / "latest_signals.json"
+    state_file = tmp_path / "state.json"
+    out_dir = tmp_path / "output"
+    sig_file.write_text(json.dumps(signals), encoding="utf-8")
+    state_file.write_text(json.dumps(state), encoding="utf-8")
+
+    import daily_snapshot as ds
+    with patch.object(ds, "SIGNALS_FILE", str(sig_file)), \
+         patch.object(ds, "STATE_FILE", str(state_file)), \
+         patch.object(ds, "OUTPUT_DIR", str(out_dir)), \
+         patch.object(ds, "DRY_RUN", True), \
+         patch("daily_snapshot.fetch_espn_scores", return_value=[]), \
+         patch("daily_snapshot.fetch_espn_injuries", return_value=[]):
+        ds.main()
+
+    assert (out_dir / "snapshot_telegram.txt").exists()
+    assert (out_dir / "snapshot_twitter.txt").exists()
+    assert (out_dir / "snapshot_newsletter.txt").exists()

@@ -1,9 +1,28 @@
-import json, os, sys, requests
+import json, os, sys, io, time, requests
+from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SIGNALS_FILE = os.path.join(BASE_DIR, "latest_signals.json")
 STATE_FILE = os.path.join(BASE_DIR, "state.json")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+# Load .env
+env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(env_path):
+    with open(env_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("\"'"))
+
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")
+TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
+TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
+TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
+TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
+DRY_RUN = os.environ.get("SNAPSHOT_DRY_RUN", "0") == "1"
 
 
 
@@ -224,3 +243,99 @@ def fmt_newsletter_snapshot(teams, prev_probs, market, date_str, games, injuries
     lines.append(f"**Market Health:** 24h vol {vol_str} | Overround {overround_str} | {tracked} teams tracked")
 
     return "\n".join(lines)
+
+
+def post_telegram(text):
+    if not BOT_TOKEN or not CHANNEL:
+        print("Telegram credentials not set, skipping.")
+        return
+    escaped = text.replace("&", "&amp;").replace("<", "&lt;")
+    if DRY_RUN:
+        print(f"[DRY RUN] Telegram ({len(escaped)} chars):\n{text}\n")
+        return
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        resp = requests.post(url, json={
+            "chat_id": CHANNEL, "text": escaped,
+            "parse_mode": "HTML", "disable_web_page_preview": True,
+        }, timeout=15)
+        data = resp.json()
+        if not data.get("ok"):
+            print(f"Telegram error: {data.get('description', 'unknown')}")
+        else:
+            print(f"Telegram posted. Message ID: {data['result']['message_id']}")
+    except Exception as e:
+        print(f"Telegram post failed: {e}")
+
+
+def post_twitter(text):
+    if not all([TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET]):
+        print("Twitter credentials not set, skipping.")
+        return
+    if DRY_RUN:
+        print(f"[DRY RUN] Twitter ({len(text)} chars):\n{text}\n")
+        return
+    try:
+        import tweepy
+        client = tweepy.Client(
+            consumer_key=TWITTER_API_KEY, consumer_secret=TWITTER_API_SECRET,
+            access_token=TWITTER_ACCESS_TOKEN, access_token_secret=TWITTER_ACCESS_SECRET,
+        )
+        resp = client.create_tweet(text=text)
+        print(f"Twitter posted. Tweet ID: {resp.data['id']}")
+    except Exception as e:
+        print(f"Twitter post failed: {e}")
+
+
+def main():
+    # Ensure stdout handles Unicode (needed on Windows with CP1252 default encoding).
+    # Guard: only wrap when there's a raw buffer to wrap and the current encoding isn't UTF-8.
+    # Skip if stdout is pytest's EncodedFile (no buffer attr that's wrappable).
+    _stdout_enc = getattr(sys.stdout, "encoding", "") or ""
+    if hasattr(sys.stdout, "buffer") and _stdout_enc.lower().replace("-", "") != "utf8":
+        try:
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+    t0 = time.time()
+    now = datetime.now(timezone.utc)
+    # %-d is Linux-only; strip leading zero on Windows via lstrip
+    date_str = now.strftime("%b %-d") if os.name != "nt" else now.strftime("%b %d").lstrip("0")
+    print(f"Signal Desk Daily Snapshot — {now.isoformat()}")
+    print("-" * 55)
+
+    data = load_snapshot_data()
+    prev_probs = load_prev_state()
+
+    print("Fetching ESPN data...")
+    games = fetch_espn_scores()
+    injuries = fetch_espn_injuries()
+    print(f"  Games: {len(games)} | Injuries: {len(injuries)}")
+
+    teams = data["teams"]
+    market = data["market"]
+
+    tg = fmt_telegram_snapshot(teams, prev_probs, market, date_str, games, injuries)
+    tw = fmt_twitter_snapshot(teams, prev_probs, market, date_str, games, injuries)
+    nl = fmt_newsletter_snapshot(teams, prev_probs, market, date_str, games, injuries)
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    for fname, content in [
+        ("snapshot_telegram.txt", tg),
+        ("snapshot_twitter.txt", tw),
+        ("snapshot_newsletter.txt", nl),
+    ]:
+        path = os.path.join(OUTPUT_DIR, fname)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"Written: {path}")
+
+    print("\nPosting...")
+    post_telegram(tg)
+    post_twitter(tw)
+
+    print(f"\nDone in {time.time() - t0:.1f}s")
+
+
+if __name__ == "__main__":
+    main()
