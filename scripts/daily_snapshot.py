@@ -163,7 +163,7 @@ def fmt_twitter_snapshot(teams, prev_probs, market, date_str, games, injuries):
         inj = injuries[0]
         loc = f" ({inj['location']})" if inj["location"] else ""
         hook = f"{inj['player']}{loc} {inj['status']} → {inj['team']} watch"
-    else:
+    elif teams:
         biggest_gap_team = max(teams.items(), key=lambda x: abs(x[1]["gap"]))
         team_name, d = biggest_gap_team
         gap_pp = d["gap"] * 100
@@ -178,6 +178,6 @@ def fmt_twitter_snapshot(teams, prev_probs, market, date_str, games, injuries):
     lines.append("Signal Desk on Telegram 👇 @SignalDesk")
 
     out = "\n".join(lines)
-    if len(out) > 275:
+    if len(out) > 280:
         out = out[:274] + "…"
     return out

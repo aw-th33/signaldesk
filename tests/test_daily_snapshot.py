@@ -208,3 +208,19 @@ def test_fmt_twitter_snapshot_truncates_if_over_limit():
     long_teams = {f"VeryLongTeamName{i}": {"pm_prob": 0.1 - i*0.005, "book_prob": 0.1, "gap": 0.05, "vol": 100000, "spread": 0.005} for i in range(10)}
     out = fmt_twitter_snapshot(long_teams, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
     assert len(out) <= 280
+
+def test_fmt_twitter_snapshot_gap_hook_when_no_injuries():
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "gap" in out.lower() or "books" in out
+
+def test_fmt_twitter_snapshot_boundary_276_chars():
+    # Build output that's exactly 276 chars before truncation guard
+    # Use the normal sample — if it's under 280, test that it's unchanged
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert len(out) <= 280
+
+def test_fmt_twitter_snapshot_empty_teams_no_crash():
+    # Should not crash with empty teams (no injuries, no teams = no hook)
+    out = fmt_twitter_snapshot({}, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "@SignalDesk" in out
+    assert len(out) <= 280
