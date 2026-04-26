@@ -171,28 +171,33 @@ Still comfortable for adding a second sport later.
 
 ## Twitter API Budget
 
+Twitter/X API v2 no longer has a free tier — all accounts pay per-usage. Observed rate: **~$0.02/tweet** (confirm in developer portal → Usage).
+
 Two posting paths each run: `twitter_bot.py` (8x/day via orchestrator) + `daily_snapshot.py` (1x/day at 9am). Snapshot tweets replace signal tweets when no signals fire, so total per day stays at 8–9.
 
 | Metric | Before | After |
 |---|---|---|
-| Tweets/day (max possible) | 7 | 9 |
 | Tweets/day (typical) | 1–4 | **8–9** |
 | Tweets/month | ~60–120 | **~270** |
+| **Monthly API cost** | ~$1.20–2.40 | **~$5.40** |
 
-### Per-tier utilization
+### Total API cost (combined)
 
-| Tier | Monthly allotment | Utilization | Margin |
+| API | Before | After | Tier |
 |---|---|---|---|
-| **Free** | 500 posts/mo | 54% | Safe (230 posts headroom) |
-| **Basic ($100/mo)** | 3,000 posts/mo | 9% | Massive headroom |
+| Odds API | 180 calls/mo (free) | 240 calls/mo (free) | Free tier (500) |
+| Twitter/X | ~$1.20–2.40/mo | **~$5.40/mo** | Per-use (~$0.02/tweet) |
+| **Total** | **~$2/mo** | **~$5.40/mo** | |
 
-Free tier suffices. If the account is on Basic, the headroom is large enough to later add replies, quote-tweets, or image media without worry.
+Note: Confirm the exact per-tweet rate at [developer.x.com/en/portal/dashboard](https://developer.x.com/en/portal/dashboard) → your app → Usage. If rate differs from $0.02, this estimate scales linearly (e.g., $0.01 = $2.70/mo, $0.03 = $8.10/mo).
 
-The `twitter_bot.py` and `daily_snapshot.py` each make 1 POST per tweet (tweepy `create_tweet` → `POST /2/tweets`), so each tweet = 1 API request.
+### Business impact
+
+At $9/mo founding member pricing, 1 subscriber covers the entire monthly API bill (Odds + Twitter). At $19/mo Pro, API cost is a rounding error.
 
 ### Rate limit guard
 
-Twitter v2 POST rate limit is 200 requests per 15-minute window (app-level). At 1 tweet per run with 3h spacing, we're well under: 1 request per 180 minutes. Even daily snapshot + signal tweet at 9am same minute = 2 requests, far below 200.
+Twitter v2 POST rate limit is 200 requests per 15-minute window (app-level). At 1 tweet per run with 3h spacing: 1 request per 180 minutes. Even with daily snapshot + signal tweet at 9am (2 requests same minute), far below 200.
 
 ---
 
