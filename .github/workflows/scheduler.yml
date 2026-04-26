@@ -45,11 +45,14 @@ jobs:
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: state.json
+          path: |
+            state.json
+            latest_signals.json
           key: apex-state-${{ github.run_number }}
 
   daily-snapshot:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.schedule, '0 9')
     timeout-minutes: 5
 
     env:
