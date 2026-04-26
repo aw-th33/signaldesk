@@ -257,3 +257,30 @@ def test_fmt_newsletter_snapshot_includes_injuries():
     out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
     assert "Injury Watch" in out
     assert "Embiid" in out
+
+def test_fmt_newsletter_snapshot_dash_when_no_prev():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "—" in out
+
+def test_fmt_newsletter_snapshot_footer_content():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Market Health" in out
+    assert "$2.1M" in out
+    assert "14 teams tracked" in out
+
+def test_fmt_newsletter_snapshot_sort_order():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    celtics_pos = out.index("Celtics")
+    thunder_pos = out.index("Thunder")
+    knicks_pos = out.index("Knicks")
+    assert celtics_pos < thunder_pos < knicks_pos
+
+def test_fmt_newsletter_snapshot_injury_no_location():
+    injuries = [{"player": "LeBron James", "team": "Lakers", "status": "Out", "location": ""}]
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
+    assert "LeBron James" in out
+    assert "()" not in out  # no empty parentheses
+
+def test_fmt_newsletter_snapshot_empty_teams_no_crash():
+    out = fmt_newsletter_snapshot({}, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Market Health" in out

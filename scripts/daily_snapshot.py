@@ -216,9 +216,11 @@ def fmt_newsletter_snapshot(teams, prev_probs, market, date_str, games, injuries
             lines.append(f"- {inj['player']} ({inj['team']}) — {inj['status']}{loc}")
 
     lines.append("")
-    vol_m = market.get("total_vol_24hr", 0) / 1_000_000
-    overround_pp = (market.get("overround", 1.0) - 1.0) * 100
+    vol_raw = market.get("total_vol_24hr")
+    overround_raw = market.get("overround")
     tracked = market.get("matched_teams", "?")
-    lines.append(f"**Market Health:** 24h vol ${vol_m:.1f}M | Overround {overround_pp:.1f}pp | {tracked} teams tracked")
+    vol_str = f"${vol_raw / 1_000_000:.1f}M" if vol_raw is not None else "?"
+    overround_str = f"{(overround_raw - 1.0) * 100:.1f}pp" if overround_raw is not None else "?"
+    lines.append(f"**Market Health:** 24h vol {vol_str} | Overround {overround_str} | {tracked} teams tracked")
 
     return "\n".join(lines)
