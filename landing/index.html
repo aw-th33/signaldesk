@@ -377,19 +377,19 @@
       <div class="hero-panels">
         <div class="float-panel">
           <div class="fp-label">Divergence</div>
-          <div class="fp-team">Boston Celtics</div>
-          <div class="fp-value">-4.0pp</div>
+          <div class="fp-team">{{EXAMPLE_TEAM}}</div>
+          <div class="fp-value">{{EXAMPLE_GAP}}pp</div>
           <div class="fp-sub">vs sportsbooks</div>
         </div>
         <div class="float-panel">
           <div class="fp-label">24h Volume</div>
-          <div class="fp-value">$5.0M</div>
+          <div class="fp-value">{{VOL_24H}}</div>
           <div class="fp-sub">championship markets</div>
         </div>
         <div class="float-panel">
           <div class="fp-label">Probability</div>
-          <div class="fp-team">Boston Celtics</div>
-          <div class="fp-value">12.3%</div>
+          <div class="fp-team">{{EXAMPLE_TEAM}}</div>
+          <div class="fp-value">{{EXAMPLE_PM_PROB}}%</div>
           <div class="fp-sub">Polymarket</div>
         </div>
       </div>
@@ -447,9 +447,9 @@
         <span class="example-tag">Divergence Signal</span>
       </div>
       <div class="example-body">
-        <strong>Boston Celtics</strong> — Polymarket <span class="example-stat">12.3%</span> vs Books <span class="example-stat">16.3%</span><br>
-        Gap: <span class="example-stat">-4.0pp</span> | 24h Vol: <span class="example-stat">$11.3M</span><br>
-        <span style="color:var(--text-dim);font-size:0.8rem;">#NBA #Divergence #Celtics</span>
+        <strong>{{EXAMPLE_TEAM}}</strong> — Polymarket <span class="example-stat">{{EXAMPLE_PM_PROB}}%</span> vs Books <span class="example-stat">{{EXAMPLE_BOOK_PROB}}%</span><br>
+        Gap: <span class="example-stat">{{EXAMPLE_GAP}}pp</span> | 24h Vol: <span class="example-stat">{{EXAMPLE_VOL}}</span><br>
+        <span style="color:var(--text-dim);font-size:0.8rem;">#NBA #Divergence #{{EXAMPLE_TEAM_HASHTAG}}</span>
       </div>
     </div>
   </div>
@@ -465,15 +465,15 @@
     <p class="section-sub">Every stat is pulled live from Polymarket — refreshed every 4 hours.</p>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value">$5.0M</div>
+        <div class="stat-value">{{VOL_24H}}</div>
         <div class="stat-label">24h Championship Volume</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">16</div>
+        <div class="stat-value">{{TEAMS_TRACKED}}</div>
         <div class="stat-label">Teams Monitored</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">1.4%</div>
+        <div class="stat-value">{{OVERROUND}}</div>
         <div class="stat-label">Market Overround</div>
       </div>
     </div>
