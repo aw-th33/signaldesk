@@ -2,7 +2,7 @@ import json, os, pytest, sys
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries
+from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot
 
 def test_load_snapshot_data_returns_expected_keys(tmp_path):
     signals = {
@@ -111,8 +111,6 @@ def test_fetch_espn_injuries_returns_empty_on_non_200():
     assert injuries == []
 
 
-from daily_snapshot import fmt_telegram_snapshot
-
 SAMPLE_TEAMS = {
     "Celtics": {"pm_prob": 0.184, "book_prob": 0.161, "gap": 0.023, "vol": 340000, "spread": 0.005},
     "Thunder": {"pm_prob": 0.161, "book_prob": 0.174, "gap": -0.013, "vol": 210000, "spread": 0.006},
@@ -154,3 +152,35 @@ def test_fmt_telegram_snapshot_includes_injuries():
     out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
     assert "Embiid" in out
     assert "Questionable" in out
+
+
+def test_overnight_arrow_positive():
+    from daily_snapshot import _overnight_arrow
+    assert _overnight_arrow(0.3) == "📈 +0.3pp"
+    assert _overnight_arrow(1.2) == "📈 +1.2pp"
+
+
+def test_overnight_arrow_negative():
+    from daily_snapshot import _overnight_arrow
+    assert _overnight_arrow(-0.3) == "📉 -0.3pp"
+    assert _overnight_arrow(-1.2) == "📉 -1.2pp"
+
+
+def test_overnight_arrow_below_threshold():
+    from daily_snapshot import _overnight_arrow
+    assert _overnight_arrow(0.0) == "—"
+    assert _overnight_arrow(0.29) == "—"
+    assert _overnight_arrow(-0.29) == "—"
+
+
+def test_fmt_telegram_snapshot_shows_negative_change():
+    out = fmt_telegram_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "📉" in out  # Thunder dropped from 16.9% to 16.1% (-0.8pp)
+
+
+def test_fmt_telegram_snapshot_dash_when_no_prev():
+    teams = {"Celtics": {"pm_prob": 0.184, "book_prob": 0.161, "gap": 0.023, "vol": 340000, "spread": 0.005}}
+    out = fmt_telegram_snapshot(teams, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Celtics" in out
+    # When no prev data, should show "—" not crash
+    assert "—" in out
