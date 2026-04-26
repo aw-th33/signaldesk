@@ -58,6 +58,8 @@ def fetch_espn_scores():
                 away_score = int(away.get("score", 0) or 0)
                 home_name = home.get("team", {}).get("shortDisplayName", "")
                 away_name = away.get("team", {}).get("shortDisplayName", "")
+                if home_score == away_score:
+                    continue
                 if home_score > away_score:
                     winner, w_score, loser, l_score = home_name, home_score, away_name, away_score
                 else:
@@ -79,6 +81,7 @@ def fetch_espn_injuries():
             team_name = team_block.get("team", {}).get("shortDisplayName", "")
             for inj in team_block.get("injuries", []):
                 status = inj.get("status", "")
+                # Only surface high-impact statuses; "Day-To-Day" and "Probable" intentionally excluded
                 if status not in ("Out", "Questionable", "Doubtful"):
                     continue
                 location = inj.get("details", {}).get("location", "")

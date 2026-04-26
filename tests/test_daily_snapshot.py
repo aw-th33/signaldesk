@@ -1,7 +1,8 @@
 import json, os, pytest, sys
+from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from daily_snapshot import load_snapshot_data, load_prev_state
+from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries
 
 def test_load_snapshot_data_returns_expected_keys(tmp_path):
     signals = {
@@ -39,9 +40,6 @@ def test_load_prev_state_returns_pm_probs(tmp_path):
 def test_load_prev_state_missing_file_returns_empty(tmp_path):
     prev = load_prev_state(str(tmp_path / "nonexistent.json"))
     assert prev == {}
-
-from unittest.mock import patch, MagicMock
-from daily_snapshot import fetch_espn_scores, fetch_espn_injuries
 
 def test_fetch_espn_scores_returns_list_of_games():
     mock_resp = MagicMock()
@@ -95,5 +93,19 @@ def test_fetch_espn_injuries_returns_list():
 
 def test_fetch_espn_injuries_returns_empty_on_failure():
     with patch("daily_snapshot.requests.get", side_effect=Exception("timeout")):
+        injuries = fetch_espn_injuries()
+    assert injuries == []
+
+def test_fetch_espn_scores_returns_empty_on_non_200():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 503
+    with patch("daily_snapshot.requests.get", return_value=mock_resp):
+        games = fetch_espn_scores()
+    assert games == []
+
+def test_fetch_espn_injuries_returns_empty_on_non_200():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 503
+    with patch("daily_snapshot.requests.get", return_value=mock_resp):
         injuries = fetch_espn_injuries()
     assert injuries == []
