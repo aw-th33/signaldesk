@@ -105,10 +105,21 @@ def match(pm_data, sb_avg):
 
 # --- STATE ---
 def load_state():
+    defaults = {
+        "markets": {},
+        "prev_markets": None,
+        "overround": None,
+        "vol_history": {},
+        "signal_history": [],
+        "twitter_rotation_index": 0,
+    }
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    return {"markets": {}, "overround": None, "vol_history": {}, "signal_history": []}
+            loaded = json.load(f)
+        for key, val in defaults.items():
+            loaded.setdefault(key, val)
+        return loaded
+    return defaults
 
 
 def save_state(state):
@@ -325,12 +336,15 @@ def main():
     if len(signal_history) > 200:
         signal_history = signal_history[-200:]
 
+    twitter_idx = state.get("twitter_rotation_index", 0)
     new_state = {
         "last_run": now,
         "markets": new_markets,
+        "prev_markets": state.get("markets") if state.get("markets") else None,
         "overround": overround,
         "vol_history": new_vol_history,
         "signal_history": signal_history,
+        "twitter_rotation_index": twitter_idx,
     }
     save_state(new_state)
     print(f"State saved ({len(new_markets)} markets, {len(new_vol_history)} vol histories)")
