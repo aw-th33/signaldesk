@@ -1,3 +1,34 @@
+# Landing Page Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build a single-page landing site (Dark Terminal style) that funnels visitors to the free Telegram channel. Static HTML/CSS on Vercel with live stats injected from `latest_signals.json`.
+
+**Architecture:** `landing/index.html` is the page template with `{{PLACEHOLDER}}` syntax for dynamic stats. `scripts/build_landing.py` reads `latest_signals.json`, extracts key metrics, replaces placeholders, and writes the final HTML. A GitHub Actions job runs the build after the signal engine, commits the updated page, and Vercel auto-deploys on push.
+
+**Tech Stack:** HTML, CSS (embedded), Python 3 for build script, Vercel for hosting (free tier).
+
+---
+
+## File Map
+
+| File | Action | Responsibility |
+|------|--------|----------------|
+| `landing/index.html` | **Create** | Full landing page with Dark Terminal CSS, placeholder stats |
+| `scripts/build_landing.py` | **Create** | Reads `latest_signals.json`, replaces `{{PLACEHOLDERS}}` in `landing/index.html` |
+| `.github/workflows/scheduler.yml` | **Modify** | Add `build-landing` job after `run` |
+| `.gitignore` | **Modify** | Add `.superpowers/` |
+
+---
+
+## Task 1: Landing Page HTML/CSS
+
+**Files:**
+- Create: `landing/index.html`
+
+- [ ] **Step 1: Write `landing/index.html`**
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +81,7 @@
     padding: 0 24px;
   }
 
-  /* Hero */
+  /* ── Hero ── */
   .hero {
     min-height: 85vh;
     display: flex;
@@ -129,7 +160,7 @@
   }
   .btn-primary:hover { box-shadow: 0 0 40px rgba(249,115,22,0.35); transform: translateY(-1px); }
 
-  /* Floating Data Panels */
+  /* ── Floating Data Panels ── */
   .hero-panels {
     position: relative;
     height: 380px;
@@ -173,8 +204,17 @@
     font-size: 0.7rem;
     color: var(--text-dim);
   }
+  .fp-glow {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--accent-glow);
+    border-radius: 50%;
+    filter: blur(24px);
+    pointer-events: none;
+  }
 
-  /* Section */
+  /* ── Section ── */
   .section {
     padding: 80px 0;
   }
@@ -200,7 +240,7 @@
     margin-bottom: 48px;
   }
 
-  /* Signal Cards */
+  /* ── Signal Cards ── */
   .signal-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -232,7 +272,7 @@
     line-height: 1.5;
   }
 
-  /* Live Example */
+  /* ── Live Example ── */
   .example-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -274,7 +314,7 @@
   .example-body { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
   .example-stat { font-weight: 700; color: var(--accent); }
 
-  /* Stats */
+  /* ── Stats ── */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -294,12 +334,13 @@
     letter-spacing: -0.02em;
     margin-bottom: 4px;
   }
+  .stat-value span { color: var(--accent); }
   .stat-label {
     font-size: 0.8rem;
     color: var(--text-muted);
   }
 
-  /* CTA Footer */
+  /* ── CTA Footer ── */
   .cta-section {
     padding: 100px 0;
     text-align: center;
@@ -331,7 +372,7 @@
     color: var(--text-muted);
   }
 
-  /* Divider */
+  /* ── Divider ── */
   .divider {
     border: none;
     border-top: 1px solid var(--border);
@@ -340,28 +381,34 @@
     padding: 0 24px;
   }
 
-  /* Responsive */
+  /* ── Responsive ── */
   @media (max-width: 768px) {
     .hero-grid {
       grid-template-columns: 1fr;
       gap: 40px;
     }
     .hero-panels { display: none; }
-    .signal-grid { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr; }
+    .signal-grid {
+      grid-template-columns: 1fr;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
     .hero { min-height: auto; padding: 60px 0 40px; }
     .section { padding: 50px 0; }
     .hero h1 { font-size: 2rem; }
     .section h2 { font-size: 1.6rem; }
   }
   @media (min-width: 769px) and (max-width: 1024px) {
-    .signal-grid { grid-template-columns: repeat(3, 1fr); }
+    .signal-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 </style>
 </head>
 <body>
 
-<!-- Hero -->
+<!-- ── Hero ── -->
 <section class="hero">
   <div class="container">
     <div class="hero-grid">
@@ -377,19 +424,19 @@
       <div class="hero-panels">
         <div class="float-panel">
           <div class="fp-label">Divergence</div>
-          <div class="fp-team">Oklahoma City Thunder</div>
-          <div class="fp-value">-2.7pp</div>
+          <div class="fp-team">{{EXAMPLE_TEAM}}</div>
+          <div class="fp-value">{{EXAMPLE_GAP}}pp</div>
           <div class="fp-sub">vs sportsbooks</div>
         </div>
         <div class="float-panel">
           <div class="fp-label">24h Volume</div>
-          <div class="fp-value">$5.0M</div>
+          <div class="fp-value">{{VOL_24H}}</div>
           <div class="fp-sub">championship markets</div>
         </div>
         <div class="float-panel">
           <div class="fp-label">Probability</div>
-          <div class="fp-team">Oklahoma City Thunder</div>
-          <div class="fp-value">52.5%</div>
+          <div class="fp-team">{{EXAMPLE_TEAM}}</div>
+          <div class="fp-value">{{EXAMPLE_PM_PROB}}%</div>
           <div class="fp-sub">Polymarket</div>
         </div>
       </div>
@@ -397,7 +444,7 @@
   </div>
 </section>
 
-<!-- What We Track -->
+<!-- ── What We Track ── -->
 <section class="section">
   <div class="container">
     <div class="section-label">What We Track</div>
@@ -435,7 +482,7 @@
 
 <hr class="divider">
 
-<!-- Live Example -->
+<!-- ── Live Example ── -->
 <section class="section">
   <div class="container">
     <div class="section-label">Sample Alert</div>
@@ -447,9 +494,9 @@
         <span class="example-tag">Divergence Signal</span>
       </div>
       <div class="example-body">
-        <strong>Oklahoma City Thunder</strong> — Polymarket <span class="example-stat">52.5%</span> vs Books <span class="example-stat">55.2%</span><br>
-        Gap: <span class="example-stat">-2.7pp</span> | 24h Vol: <span class="example-stat">$8.8M</span><br>
-        <span style="color:var(--text-dim);font-size:0.8rem;">#NBA #Divergence #Thunder</span>
+        <strong>{{EXAMPLE_TEAM}}</strong> — Polymarket <span class="example-stat">{{EXAMPLE_PM_PROB}}%</span> vs Books <span class="example-stat">{{EXAMPLE_BOOK_PROB}}%</span><br>
+        Gap: <span class="example-stat">{{EXAMPLE_GAP}}pp</span> | 24h Vol: <span class="example-stat">{{EXAMPLE_VOL}}</span><br>
+        <span style="color:var(--text-dim);font-size:0.8rem;">#NBA #Divergence #{{EXAMPLE_TEAM_HASHTAG}}</span>
       </div>
     </div>
   </div>
@@ -457,7 +504,7 @@
 
 <hr class="divider">
 
-<!-- Social Proof -->
+<!-- ── Social Proof ── -->
 <section class="section">
   <div class="container">
     <div class="section-label">Market Coverage</div>
@@ -465,15 +512,15 @@
     <p class="section-sub">Every stat is pulled live from Polymarket — refreshed every 4 hours.</p>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value">$5.0M</div>
+        <div class="stat-value">{{VOL_24H}}</div>
         <div class="stat-label">24h Championship Volume</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">16</div>
+        <div class="stat-value">{{TEAMS_TRACKED}}</div>
         <div class="stat-label">Teams Monitored</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">1.4pp</div>
+        <div class="stat-value">{{OVERROUND}}</div>
         <div class="stat-label">Market Overround</div>
       </div>
     </div>
@@ -482,7 +529,7 @@
 
 <hr class="divider">
 
-<!-- CTA -->
+<!-- ── CTA ── -->
 <section class="cta-section">
   <div class="container">
     <div class="section-label">Get Started</div>
@@ -498,3 +545,248 @@
 
 </body>
 </html>
+```
+
+- [ ] **Step 2: Open in browser to verify**
+
+Open `landing/index.html` in a browser. Verify all 5 sections render, the floating panels are positioned, colors and spacing look right.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add landing/index.html
+git commit -m "feat: landing page with Dark Terminal aesthetic"
+```
+
+---
+
+## Task 2: Build Script
+
+**Files:**
+- Create: `scripts/build_landing.py`
+
+- [ ] **Step 1: Write `scripts/build_landing.py`**
+
+```python
+import json, os, sys, io
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SIGNALS_FILE = os.path.join(BASE_DIR, "latest_signals.json")
+LANDING_FILE = os.path.join(BASE_DIR, "landing", "index.html")
+
+
+def main():
+    if not os.path.exists(SIGNALS_FILE):
+        print("latest_signals.json not found. Skipping landing page build.")
+        sys.exit(0)
+
+    if not os.path.exists(LANDING_FILE):
+        print("landing/index.html not found. Skipping.")
+        sys.exit(1)
+
+    with open(SIGNALS_FILE, encoding="utf-8") as f:
+        signals = json.load(f)
+
+    with open(LANDING_FILE, encoding="utf-8") as f:
+        html = f.read()
+
+    market = signals.get("market", {})
+    snapshot = signals.get("snapshot", {})
+
+    vol_24h = market.get("total_vol_24hr", 0)
+    overround = market.get("overround", 1.0)
+    teams_tracked = market.get("matched_teams", 0)
+
+    vol_str = f"${vol_24h / 1_000_000:.1f}M"
+    overround_pp = f"{(overround - 1.0) * 100:.1f}pp"
+
+    # Pick example team: highest PM prob from snapshot
+    example_team = "Celtics"
+    example_pm_prob = 12.2
+    example_book_prob = 16.3
+    example_gap = -4.0
+    example_vol = "$340K"
+    example_hashtag = "Celtics"
+
+    if snapshot:
+        top_team = max(snapshot.items(), key=lambda x: x[1].get("pm_prob", 0))
+        team_name, data = top_team
+        example_team = team_name
+        example_pm_prob = data.get("pm_prob", 0) * 100
+        example_book_prob = data.get("book_prob", 0) * 100
+        example_gap = data.get("gap", 0) * 100
+        vol = data.get("vol", 0)
+        if vol >= 1_000_000:
+            example_vol = f"${vol / 1_000_000:.1f}M"
+        else:
+            example_vol = f"${vol / 1000:.0f}K"
+        example_hashtag = team_name.split()[-1]
+
+    replacements = {
+        "{{VOL_24H}}": vol_str,
+        "{{TEAMS_TRACKED}}": str(teams_tracked),
+        "{{OVERROUND}}": overround_pp,
+        "{{EXAMPLE_TEAM}}": example_team,
+        "{{EXAMPLE_PM_PROB}}": f"{example_pm_prob:.1f}",
+        "{{EXAMPLE_BOOK_PROB}}": f"{example_book_prob:.1f}",
+        "{{EXAMPLE_GAP}}": f"{example_gap:+.1f}",
+        "{{EXAMPLE_VOL}}": example_vol,
+        "{{EXAMPLE_TEAM_HASHTAG}}": example_hashtag,
+    }
+
+    for placeholder, value in replacements.items():
+        if placeholder in html:
+            html = html.replace(placeholder, value)
+        else:
+            print(f"Warning: placeholder {placeholder} not found in HTML")
+
+    with open(LANDING_FILE, encoding="utf-8") as f:
+        current = f.read()
+
+    if html == current:
+        print("Landing page unchanged. No commit needed.")
+        return
+
+    with open(LANDING_FILE, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"Landing page updated — {vol_str} volume, {teams_tracked} teams, {overround_pp} overround")
+    print(f"Example: {example_team} {example_pm_prob:.1f}% PM vs {example_book_prob:.1f}% books ({example_gap:+.1f}pp)")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+- [ ] **Step 2: Run build script to verify it works**
+
+```bash
+python scripts/build_landing.py
+```
+
+Expected output: Stats and example team printed, `landing/index.html` updated with real values.
+
+- [ ] **Step 3: Verify the built HTML**
+
+Open `landing/index.html` in a browser. Confirm all `{{PLACEHOLDERS}}` are replaced with actual values from `latest_signals.json`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add scripts/build_landing.py landing/index.html
+git commit -m "feat: landing page build script with live stat injection"
+```
+
+---
+
+## Task 3: GitHub Actions Job
+
+**Files:**
+- Modify: `.github/workflows/scheduler.yml`
+
+- [ ] **Step 1: Add `build-landing` job to scheduler.yml**
+
+Append the following job to the `jobs:` block in `.github/workflows/scheduler.yml` (same indentation level as `run:` and `daily-snapshot:`):
+
+```yaml
+  build-landing:
+    runs-on: ubuntu-latest
+    needs: run
+    timeout-minutes: 3
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore signal state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            state.json
+            latest_signals.json
+          key: apex-state-${{ github.run_number }}
+          restore-keys: apex-state-
+
+      - name: Build landing page
+        run: python scripts/build_landing.py
+
+      - name: Commit updated landing page
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add landing/index.html
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update landing page stats"
+            git push
+          fi
+```
+
+- [ ] **Step 2: Verify YAML syntax**
+
+```bash
+python -c "import yaml; yaml.safe_load(open('.github/workflows/scheduler.yml')); print('YAML valid')"
+```
+
+Expected: `YAML valid`
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add .github/workflows/scheduler.yml
+git commit -m "feat: auto-build landing page from latest_signals.json on each engine run"
+```
+
+---
+
+## Task 4: Vercel Setup
+
+This is a manual one-time setup. No code changes.
+
+- [ ] **Step 1: Connect repo to Vercel**
+  1. Go to https://vercel.com and sign in with GitHub
+  2. Click "New Project" → Import the Signal Desk repo
+  3. Set **Root Directory** to `landing`
+  4. Framework preset: "Other" (it's static HTML)
+  5. Build command: leave empty (already built by GitHub Actions)
+  6. Output directory: leave empty (serves `index.html` from root)
+  7. Click Deploy
+
+- [ ] **Step 2: Configure custom domain (optional)**
+  - In Vercel project settings → Domains → add your domain
+  - Update DNS with Vercel's provided CNAME/A records
+
+- [ ] **Step 3: Verify auto-deploy**
+  - Push any change to `main` and confirm Vercel deploys automatically
+  - Or manually trigger a workflow dispatch on GitHub Actions and check Vercel picks up the updated `landing/index.html`
+
+---
+
+## Task 5: Integration Verification
+
+- [ ] **Step 1: Trigger full pipeline manually**
+
+On GitHub: Actions → Signal Desk Engine → Run workflow → dispatch.
+
+Verify:
+- Signal engine runs (job `run`)
+- Build landing page runs (job `build-landing`)
+- Landing page stats are updated in the repo
+- Vercel deploys the updated page
+
+- [ ] **Step 2: Check the live page**
+
+Open the Vercel deployment URL. Confirm:
+- All 5 sections render
+- Stats show real numbers (not `{{PLACEHOLDERS}}`)
+- Telegram link works
+- Mobile responsive (use browser dev tools)
+- No broken styles or layout issues
