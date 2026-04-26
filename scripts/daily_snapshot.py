@@ -181,3 +181,44 @@ def fmt_twitter_snapshot(teams, prev_probs, market, date_str, games, injuries):
     if len(out) > 280:
         out = out[:274] + "…"
     return out
+
+
+def fmt_newsletter_snapshot(teams, prev_probs, market, date_str, games, injuries):
+    lines = [f"## NBA Championship Markets — {date_str}", ""]
+    lines.append("| Team | PM Prob | Change | Books | Gap | 24h Vol |")
+    lines.append("|------|---------|--------|-------|-----|---------|")
+
+    sorted_teams = sorted(teams.items(), key=lambda x: x[1]["pm_prob"], reverse=True)
+    for team, d in sorted_teams:
+        pm = d["pm_prob"] * 100
+        book = d["book_prob"] * 100
+        gap = d["gap"] * 100
+        vol_k = d["vol"] / 1000
+        prev = prev_probs.get(team)
+        if prev is not None:
+            chg = (d["pm_prob"] - prev) * 100
+            change_str = f"{chg:+.1f}pp"
+        else:
+            change_str = "—"
+        lines.append(f"| {team} | {pm:.1f}% | {change_str} | {book:.1f}% | {gap:+.1f}pp | ${vol_k:.0f}K |")
+
+    if games:
+        lines.append("")
+        lines.append("### Last Night's Results")
+        for g in games:
+            lines.append(f"- {g['winner']} {g['winner_score']} def. {g['loser']} {g['loser_score']}")
+
+    if injuries:
+        lines.append("")
+        lines.append("### Injury Watch")
+        for inj in injuries:
+            loc = f" ({inj['location']})" if inj["location"] else ""
+            lines.append(f"- {inj['player']} ({inj['team']}) — {inj['status']}{loc}")
+
+    lines.append("")
+    vol_m = market.get("total_vol_24hr", 0) / 1_000_000
+    overround_pp = (market.get("overround", 1.0) - 1.0) * 100
+    tracked = market.get("matched_teams", "?")
+    lines.append(f"**Market Health:** 24h vol ${vol_m:.1f}M | Overround {overround_pp:.1f}pp | {tracked} teams tracked")
+
+    return "\n".join(lines)

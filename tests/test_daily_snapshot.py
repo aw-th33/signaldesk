@@ -2,7 +2,7 @@ import json, os, pytest, sys
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot, fmt_twitter_snapshot
+from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot, fmt_twitter_snapshot, fmt_newsletter_snapshot
 
 def test_load_snapshot_data_returns_expected_keys(tmp_path):
     signals = {
@@ -224,3 +224,36 @@ def test_fmt_twitter_snapshot_empty_teams_no_crash():
     out = fmt_twitter_snapshot({}, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
     assert "@SignalDesk" in out
     assert len(out) <= 280
+
+
+def test_fmt_newsletter_snapshot_contains_all_teams():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Celtics" in out
+    assert "Thunder" in out
+    assert "Knicks" in out
+
+def test_fmt_newsletter_snapshot_contains_table_headers():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "PM Prob" in out
+    assert "Change" in out
+    assert "Gap" in out
+
+def test_fmt_newsletter_snapshot_omits_results_when_empty():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Last Night" not in out
+
+def test_fmt_newsletter_snapshot_includes_results():
+    games = [{"winner": "Celtics", "winner_score": 112, "loser": "Heat", "loser_score": 94}]
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, games, [])
+    assert "Last Night" in out
+    assert "112" in out
+
+def test_fmt_newsletter_snapshot_omits_injuries_when_empty():
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Injury Watch" not in out
+
+def test_fmt_newsletter_snapshot_includes_injuries():
+    injuries = [{"player": "Joel Embiid", "team": "Sixers", "status": "Questionable", "location": "knee"}]
+    out = fmt_newsletter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
+    assert "Injury Watch" in out
+    assert "Embiid" in out
