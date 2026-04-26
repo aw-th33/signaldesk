@@ -302,6 +302,93 @@ def post_twitter(text):
 
 
 def main():
+
+    LANDING_DIR = os.path.join(BASE_DIR, "landing")
+
+    def _generate_rss_xml(teams, prev_probs, market, date_str, games, injuries):
+        now_utc = datetime.now(timezone.utc)
+        pub_date = now_utc.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        date_iso = now_utc.strftime("%Y-%m-%d")
+
+        html = []
+        html.append(f'<h1 style="text-align:center;margin:16px 0 8px;font-size:24px;color:#ffffff;">NBA Championship Markets</h1>')
+        html.append(f'<p style="text-align:center;color:#999;margin:0 0 24px;font-size:14px;">{date_str}</p>')
+
+        html.append('<table style="width:100%;border-collapse:collapse;font-size:14px;">')
+        html.append('<thead>')
+        html.append('<tr style="background:#f97316;color:#0B0B0C;">')
+        html.append('<th style="padding:10px 12px;text-align:left;">Team</th>')
+        html.append('<th style="padding:10px 12px;text-align:right;">PM Prob</th>')
+        html.append('<th style="padding:10px 12px;text-align:right;">Change</th>')
+        html.append('<th style="padding:10px 12px;text-align:right;">Books</th>')
+        html.append('<th style="padding:10px 12px;text-align:right;">Gap</th>')
+        html.append('<th style="padding:10px 12px;text-align:right;">24h Vol</th>')
+        html.append('</tr>')
+        html.append('</thead>')
+        html.append('<tbody>')
+
+        sorted_teams = sorted(teams.items(), key=lambda x: x[1]["pm_prob"], reverse=True)
+        for i, (team, d) in enumerate(sorted_teams):
+            pm = d["pm_prob"] * 100
+            book = d["book_prob"] * 100
+            gap = d["gap"] * 100
+            vol_k = d["vol"] / 1000
+            prev = prev_probs.get(team)
+            if prev is not None:
+                chg = (d["pm_prob"] - prev) * 100
+                change_str = f"{chg:+.1f}pp"
+            else:
+                change_str = "—"
+            bg = "#1a1a1a" if i % 2 == 0 else "#111111"
+            html.append(f'<tr style="background:{bg};">')
+            html.append(f'<td style="padding:10px 12px;">{team}</td>')
+            html.append(f'<td style="padding:10px 12px;text-align:right;">{pm:.1f}%</td>')
+            html.append(f'<td style="padding:10px 12px;text-align:right;">{change_str}</td>')
+            html.append(f'<td style="padding:10px 12px;text-align:right;">{book:.1f}%</td>')
+            html.append(f'<td style="padding:10px 12px;text-align:right;">{gap:+.1f}pp</td>')
+            html.append(f'<td style="padding:10px 12px;text-align:right;">${vol_k:.0f}K</td>')
+            html.append('</tr>')
+        html.append('</tbody>')
+        html.append('</table>')
+
+        if games:
+            html.append('<h2 style="margin:24px 0 8px;font-size:18px;color:#f97316;">Last Night\'s Results</h2>')
+            for g in games:
+                html.append(f'<p style="margin:4px 0;color:#ccc;">— {g["winner"]} {g["winner_score"]} def. {g["loser"]} {g["loser_score"]}</p>')
+
+        if injuries:
+            html.append('<h2 style="margin:24px 0 8px;font-size:18px;color:#f97316;">Injury Watch</h2>')
+            for inj in injuries:
+                loc = f' ({inj["location"]})' if inj["location"] else ""
+                html.append(f'<p style="margin:4px 0;color:#ccc;">— {inj["player"]} ({inj["team"]}) {inj["status"]}{loc}</p>')
+
+        vol_raw = market.get("total_vol_24hr")
+        overround_raw = market.get("overround")
+        tracked = market.get("matched_teams", "?")
+        vol_str = f"${vol_raw / 1_000_000:.1f}M" if vol_raw is not None else "?"
+        overround_str = f"{(overround_raw - 1.0) * 100:.1f}pp" if overround_raw is not None else "?"
+        html.append(f'<p style="margin:24px 0 8px;font-size:12px;color:#666;">Market Health: 24h vol {vol_str} | Overround {overround_str} | {tracked} teams tracked</p>')
+        html.append(f'<p style="text-align:center;margin:20px 0;"><a href="https://t.me/signaldesk_nba" style="color:#f97316;font-weight:600;">Join the free Telegram channel</a></p>')
+
+        html_body = "\n".join(html)
+
+        return f'''<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>Signal Desk — NBA Championship Markets</title>
+<link>https://signaldesk.vercel.app</link>
+<description>Daily NBA championship market intelligence from Polymarket. Probabilities, sportsbook divergences, injuries, and results.</description>
+<language>en-us</language>
+<atom:link href="https://signaldesk.vercel.app/rss.xml" rel="self" type="application/rss+xml"/>
+<item>
+<title>NBA Championship Markets — {date_str}</title>
+<link>https://signaldesk.vercel.app</link>
+<description><![CDATA[{html_body}]]></description>
+<pubDate>{pub_date}</pubDate>
+<guid isPermaLink="false">signaldesk-nba-{date_iso}</guid>
+</item>
+</channel>
+</rss>'''
     # Ensure stdout handles Unicode (needed on Windows with CP1252 default encoding).
     # Guard: only wrap when there's a raw buffer to wrap and the current encoding isn't UTF-8.
     # Skip if stdout is pytest's EncodedFile (no buffer attr that's wrappable).
@@ -343,6 +430,12 @@ def main():
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"Written: {path}")
+
+    os.makedirs(LANDING_DIR, exist_ok=True)
+    rss_path = os.path.join(LANDING_DIR, "rss.xml")
+    with open(rss_path, "w", encoding="utf-8") as f:
+        f.write(_generate_rss_xml(teams, prev_probs, market, date_str, games, injuries))
+    print(f"Written: {rss_path}")
 
     print("\nPosting...")
     post_telegram(tg)

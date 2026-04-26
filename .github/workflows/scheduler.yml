@@ -55,6 +55,8 @@ jobs:
     needs: run
     if: github.event_name == 'workflow_dispatch' || startsWith(github.event.schedule, '0 9')
     timeout-minutes: 5
+    permissions:
+      contents: write
 
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -85,6 +87,18 @@ jobs:
 
       - name: Run daily snapshot
         run: python scripts/daily_snapshot.py
+
+      - name: Commit RSS feed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add landing/rss.xml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update RSS feed"
+            git push
+          fi
 
   build-landing:
     runs-on: ubuntu-latest
