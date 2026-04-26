@@ -169,6 +169,33 @@ Still comfortable for adding a second sport later.
 
 ---
 
+## Twitter API Budget
+
+Two posting paths each run: `twitter_bot.py` (8x/day via orchestrator) + `daily_snapshot.py` (1x/day at 9am). Snapshot tweets replace signal tweets when no signals fire, so total per day stays at 8–9.
+
+| Metric | Before | After |
+|---|---|---|
+| Tweets/day (max possible) | 7 | 9 |
+| Tweets/day (typical) | 1–4 | **8–9** |
+| Tweets/month | ~60–120 | **~270** |
+
+### Per-tier utilization
+
+| Tier | Monthly allotment | Utilization | Margin |
+|---|---|---|---|
+| **Free** | 500 posts/mo | 54% | Safe (230 posts headroom) |
+| **Basic ($100/mo)** | 3,000 posts/mo | 9% | Massive headroom |
+
+Free tier suffices. If the account is on Basic, the headroom is large enough to later add replies, quote-tweets, or image media without worry.
+
+The `twitter_bot.py` and `daily_snapshot.py` each make 1 POST per tweet (tweepy `create_tweet` → `POST /2/tweets`), so each tweet = 1 API request.
+
+### Rate limit guard
+
+Twitter v2 POST rate limit is 200 requests per 15-minute window (app-level). At 1 tweet per run with 3h spacing, we're well under: 1 request per 180 minutes. Even daily snapshot + signal tweet at 9am same minute = 2 requests, far below 200.
+
+---
+
 ## Success Metrics
 
 - Twitter impressions/day should increase (more posting = more reach)
