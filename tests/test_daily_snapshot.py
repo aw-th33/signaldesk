@@ -2,7 +2,7 @@ import json, os, pytest, sys
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot
+from daily_snapshot import load_snapshot_data, load_prev_state, fetch_espn_scores, fetch_espn_injuries, fmt_telegram_snapshot, fmt_twitter_snapshot
 
 def test_load_snapshot_data_returns_expected_keys(tmp_path):
     signals = {
@@ -184,3 +184,27 @@ def test_fmt_telegram_snapshot_dash_when_no_prev():
     assert "Celtics" in out
     # When no prev data, should show "—" not crash
     assert "—" in out
+
+
+def test_fmt_twitter_snapshot_under_280_chars():
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert len(out) <= 280
+
+def test_fmt_twitter_snapshot_contains_top_2_teams():
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "Celtics" in out
+    assert "Thunder" in out
+
+def test_fmt_twitter_snapshot_contains_signal_desk_handle():
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert "@SignalDesk" in out
+
+def test_fmt_twitter_snapshot_shows_injury_hook_when_present():
+    injuries = [{"player": "Joel Embiid", "team": "Sixers", "status": "Questionable", "location": "knee"}]
+    out = fmt_twitter_snapshot(SAMPLE_TEAMS, SAMPLE_PREV, SAMPLE_MARKET, SAMPLE_DATE, [], injuries)
+    assert "Embiid" in out
+
+def test_fmt_twitter_snapshot_truncates_if_over_limit():
+    long_teams = {f"VeryLongTeamName{i}": {"pm_prob": 0.1 - i*0.005, "book_prob": 0.1, "gap": 0.05, "vol": 100000, "spread": 0.005} for i in range(10)}
+    out = fmt_twitter_snapshot(long_teams, {}, SAMPLE_MARKET, SAMPLE_DATE, [], [])
+    assert len(out) <= 280

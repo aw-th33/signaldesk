@@ -137,3 +137,47 @@ def fmt_telegram_snapshot(teams, prev_probs, market, date_str, games, injuries):
     lines.append(f"24h vol: ${vol_m:.1f}M | Overround: {overround_pp:.1f}pp | Markets tracked: {tracked}")
 
     return "\n".join(lines)
+
+
+def fmt_twitter_snapshot(teams, prev_probs, market, date_str, games, injuries):
+    sorted_teams = sorted(teams.items(), key=lambda x: x[1]["pm_prob"], reverse=True)
+    top2 = sorted_teams[:2]
+
+    lines = [f"NBA Markets — {date_str}", ""]
+
+    team_parts = []
+    for team, d in top2:
+        pm = d["pm_prob"] * 100
+        prev = prev_probs.get(team)
+        change_str = ""
+        if prev is not None:
+            chg = (d["pm_prob"] - prev) * 100
+            if abs(chg) >= 0.3:
+                change_str = f" ({chg:+.1f}pp)"
+        team_parts.append(f"{team} {pm:.1f}%{change_str}")
+    lines.append(" | ".join(team_parts))
+
+    # News hook: injury if available, otherwise biggest gap
+    hook = ""
+    if injuries:
+        inj = injuries[0]
+        loc = f" ({inj['location']})" if inj["location"] else ""
+        hook = f"{inj['player']}{loc} {inj['status']} → {inj['team']} watch"
+    else:
+        biggest_gap_team = max(teams.items(), key=lambda x: abs(x[1]["gap"]))
+        team_name, d = biggest_gap_team
+        gap_pp = d["gap"] * 100
+        direction = "above" if gap_pp > 0 else "below"
+        hook = f"Biggest gap: {team_name} {abs(gap_pp):.1f}pp {direction} books"
+
+    if hook:
+        lines.append("")
+        lines.append(hook)
+
+    lines.append("")
+    lines.append("Signal Desk on Telegram 👇 @SignalDesk")
+
+    out = "\n".join(lines)
+    if len(out) > 275:
+        out = out[:274] + "…"
+    return out
