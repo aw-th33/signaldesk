@@ -36,6 +36,12 @@ SNAPSHOT_TYPES = [
 ODDS_DEPENDENT_TYPES = {1, 4, 7}
 
 
+def _build_url(slug):
+    if slug:
+        return "https://polymarket.com/event/2026-nba-champion/" + slug
+    return ""
+
+
 def fmt_telegram(signals, meta):
     if not signals:
         return "[Signal Desk] " + meta["date"] + "\nNo triggered signals this cycle. Markets stable."
@@ -47,6 +53,9 @@ def fmt_telegram(signals, meta):
         tag = TYPE_PREFIX.get(s["type"], "[SIG]")
         sev = SEVERITY_LABEL.get(s["severity"], "LOW")
         lines.append(tag + " [" + sev + "] " + s["message"])
+        url = _build_url(s.get("details", {}).get("slug", ""))
+        if url:
+            lines.append(url)
         lines.append("")
 
     return "\n".join(lines).strip()
@@ -98,6 +107,9 @@ def fmt_twitter(signals, meta):
                 line = s.get("message", "")
 
             lines.append(line)
+            url = _build_url(d.get("slug", ""))
+            if url:
+                lines.append(url)
             lines.append("")
 
     lines.append("Full data in bio. Follow for more.")
@@ -154,6 +166,9 @@ def fmt_newsletter(signals, meta):
             lines.append("  [" + s["severity"].upper() + "] " + s["message"])
             if ctx:
                 lines.append("    " + ctx)
+            url = _build_url(d.get("slug", ""))
+            if url:
+                lines.append("    " + url)
         lines.append("")
 
     return "\n".join(lines).strip()

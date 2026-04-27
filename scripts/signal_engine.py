@@ -42,6 +42,7 @@ def fetch_polymarket():
             "vol_24hr": vol_24hr,
             "liq": float(m.get("liquidityNum", 0) or 0),
             "spread": float(m.get("spread") or 0),
+            "slug": m.get("slug", ""),
         }
 
     total_vol = float(event.get("volume", 0) or 0)
@@ -98,6 +99,7 @@ def match(pm_data, sb_avg):
                 "vol_24hr": pm_data[pm_name]["vol_24hr"],
                 "liq": pm_data[pm_name]["liq"],
                 "spread": pm_data[pm_name]["spread"],
+                "slug": pm_data[pm_name].get("slug", ""),
                 "gap": pm_data[pm_name]["prob"] - sb_avg[sb_name],
             }
     return matched
@@ -151,6 +153,7 @@ def detect_divergence_change(matched, prev_markets, signals):
                     "direction": direction,
                     "spread": curr["spread"],
                     "vol": curr["vol"],
+                    "slug": curr.get("slug", ""),
                 },
                 "message": (
                     f"{direction[0].upper()}{direction[1:]} divergence: {team} "
@@ -183,6 +186,7 @@ def detect_large_divergence(matched, signals):
                 "direction": direction,
                 "spread": curr["spread"],
                 "vol": curr["vol"],
+                "slug": curr.get("slug", ""),
             },
             "message": (
                 f"{team} PM {curr['pm_prob']:.1%} vs Books {curr['book_prob']:.1%} "
@@ -214,6 +218,7 @@ def detect_prob_moves(matched, prev_markets, signals):
                     "direction": direction,
                     "vol": curr["vol"],
                     "spread": curr["spread"],
+                    "slug": curr.get("slug", ""),
                 },
                 "message": (
                     f"Probability {direction}: {team} "
@@ -264,6 +269,7 @@ def detect_spread_deterioration(matched, prev_markets, signals):
                     "current_spread": curr["spread"],
                     "previous_spread": prev_spread,
                     "vol": curr["vol"],
+                    "slug": curr.get("slug", ""),
                 },
                 "message": (
                     f"Spread deteriorated: {team} {prev_spread:.3f} → {curr['spread']:.3f} "
@@ -291,6 +297,7 @@ def detect_volume_spike(matched, vol_history, signals):
                         "avg_vol_24hr": round(avg, 0),
                         "ratio": round(v24 / avg, 1) if avg > 0 else None,
                         "samples": len(history),
+                        "slug": curr.get("slug", ""),
                     },
                     "message": (
                         f"Volume spike: {team} 24h ${v24:,.0f} "
