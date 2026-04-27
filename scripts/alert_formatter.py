@@ -63,7 +63,7 @@ def fmt_telegram(signals, meta):
 
 def fmt_twitter(signals, meta):
     top = sorted(signals, key=lambda s:
-        {"high": 3, "medium": 2, "low": 1}.get(s["severity"], 0), reverse=True)[:2]
+        {"high": 3, "medium": 2, "low": 1}.get(s["severity"], 0), reverse=True)[:1]
 
     lines = ["NBA Market Intel -- " + meta["date"]]
     lines.append("")
