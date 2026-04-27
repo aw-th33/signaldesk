@@ -13,6 +13,7 @@ STATE_FILE = os.path.join(BASE_DIR, "state.json")
 
 TYPE_PREFIX = {
     "divergence_change": "[GAP]",
+    "large_divergence": "[DIVERGE]",
     "probability_move": "[MOVE]",
     "overround_drift": "[OVERROUND]",
     "spread_deterioration": "[SPREAD]",
@@ -72,6 +73,11 @@ def fmt_twitter(signals, meta):
                 line = "{} PM/Books gap {} {:.1f}pp (PM {:.0%} vs {:.0%})".format(
                     team, d.get("direction", "changed"), chg,
                     d.get("pm_prob", 0), d.get("book_prob", 0))
+            elif t == "large_divergence":
+                gap_pp = abs(round(d.get("gap", 0) * 100, 1))
+                line = "{} PM/Books gap {:.1f}pp {} (PM {:.0%} vs {:.0%})".format(
+                    team, gap_pp, d.get("direction", ""),
+                    d.get("pm_prob", 0), d.get("book_prob", 0))
             elif t == "probability_move":
                 chg = d.get("change", 0) * 100
                 line = "{} prob {} {:.1%}->{:.1%} ({:+.1f}pp) ${:.0f}K vol".format(
@@ -117,6 +123,7 @@ def fmt_newsletter(signals, meta):
 
     type_labels = {
         "divergence_change": "Divergence changes (PM vs sportsbooks)",
+        "large_divergence": "Large divergences (PM vs sportsbooks)",
         "probability_move": "Probability moves",
         "overround_drift": "Overround drift",
         "spread_deterioration": "Spread deterioration",
@@ -131,6 +138,9 @@ def fmt_newsletter(signals, meta):
             ctx = ""
             if stype == "divergence_change":
                 ctx = "The gap between PM and sportsbooks is " + d.get("direction", "?") + "."
+            elif stype == "large_divergence":
+                gap_pp = abs(round(d.get("gap", 0), 3)) * 100
+                ctx = "Persistent {:.1f}pp gap — {}.".format(gap_pp, d.get("direction", "?"))
             elif stype == "probability_move":
                 ctx = "Volume backing this move is ${:,.0f}.".format(d.get("vol", 0))
             elif stype == "volume_spike":

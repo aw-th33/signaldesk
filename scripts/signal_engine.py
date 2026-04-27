@@ -160,6 +160,37 @@ def detect_divergence_change(matched, prev_markets, signals):
             })
 
 
+def detect_large_divergence(matched, signals):
+    for team, curr in matched.items():
+        gap = curr["gap"]
+        if abs(gap) < 0.025:
+            continue
+        if abs(gap) >= 0.04:
+            severity = "high"
+        elif abs(gap) >= 0.03:
+            severity = "medium"
+        else:
+            severity = "low"
+        direction = "PM above books" if gap > 0 else "books above PM"
+        signals.append({
+            "type": "large_divergence",
+            "team": team,
+            "severity": severity,
+            "details": {
+                "pm_prob": round(curr["pm_prob"], 4),
+                "book_prob": round(curr["book_prob"], 4),
+                "gap": round(gap, 4),
+                "direction": direction,
+                "spread": curr["spread"],
+                "vol": curr["vol"],
+            },
+            "message": (
+                f"{team} PM {curr['pm_prob']:.1%} vs Books {curr['book_prob']:.1%} "
+                f"({abs(gap):.1%} gap, {direction})"
+            ),
+        })
+
+
 def detect_prob_moves(matched, prev_markets, signals):
     for team, curr in matched.items():
         prev = prev_markets.get(team, {})
@@ -297,6 +328,7 @@ def main():
 
     print("Running detectors...")
     detect_divergence_change(matched, prev_markets, signals)
+    detect_large_divergence(matched, signals)
     detect_prob_moves(matched, prev_markets, signals)
     overround = detect_overround_drift(matched, prev_overround, signals)
     detect_spread_deterioration(matched, prev_markets, signals)
